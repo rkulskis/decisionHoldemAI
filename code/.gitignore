@@ -1,0 +1,3 @@
+# ignore all data files, the download link is included in the repo
+*.dat
+*.bin

@@ -3,11 +3,14 @@
 #include <math.h>
 #include "Table.h"
 #include "Engine.h"
+#include <map>
 using namespace std;
 
 Engine* engine = new Engine();
 std::map<unsigned char, int>::iterator actionfind;
-map<unsigned char, int> raise_action_chips = { {'l',0},{'d',0},{'n',0},{(unsigned char)1,0},{(unsigned char)2,0},{(unsigned char)3,0},{(unsigned char)4,0},{(unsigned char)8,0},{(unsigned char)20,0},{(unsigned char)40,0} };
+// values to raise by
+map<unsigned char, int> raise_action_chips = {{'l',0},{'d',0},{'n',0},{(unsigned char)1,0},{(unsigned char)2,0},{(unsigned char)3,0},{(unsigned char)4,0},{(unsigned char)8,0},{(unsigned char)20,0},{(unsigned char)40,0}};
+map<int, int> myMap;
 
 char suits[] = "scdh";
 char ranks[] = "23456789TJQKA";
