@@ -54,8 +54,6 @@ void bias(double* oriregret, int len, double sigma[], unsigned char actionstr[],
 }
 void scale_regret(double* regret, int len, double sigma[], double scale = 1000) {
 	assert(len != 0);
-	//for (int i = 0; i < len; i++)
-	//	sigma[i] = regret[i];
 	scale = scale * len;
 	double sum = 0;
 	for (int i = 0; i < len; i++) {
@@ -75,6 +73,8 @@ inline double faboslut(double a, double b) {
 	double t = a - b;
 	return a < 0 ? -a : a;
 }
+// Q: what is the purpose of this function?
+// recursive function, ends when state is terminal
 void check_saveloadsubtree(strategy_node* publicnode1[], strategy_node* publicnode2[], Pokerstate& state, int len) {
 	if (state.is_terminal()) {
 		assert(publicnode1[0]->action_len == 0);
@@ -85,8 +85,10 @@ void check_saveloadsubtree(strategy_node* publicnode1[], strategy_node* publicno
 		strategy_node** tempprivatenode22 = new strategy_node * [publicnode2[0]->action_len];
 		tempprivatenode2[0] = publicnode1[0]->actions;
 		tempprivatenode22[0] = publicnode2[0]->actions;
+        // make sure action portfolio length is the same
 		for (int i = 0; i < len; i++)
 			assert(publicnode1[i]->action_len == publicnode2[i]->action_len);
+        // Q: why is this loop necessary?
 		for (int j = 0; j < publicnode1[0]->action_len; j++) {
 			tempprivatenode2[j] = publicnode1[0]->actions + j;
 			tempprivatenode22[j] = publicnode2[0]->actions + j;
@@ -121,7 +123,7 @@ void check_saveloadsubtree(strategy_node* publicnode1[], strategy_node* publicno
 	delete[] tempprivatenode;
 	delete[] tempprivatenode1;
 }
-void check_saveload(strategy_node* root1, strategy_node* root2, Pokerstate state) {	//check 蓝图策略 subgame tree whether action length in same state 
+void check_saveload(strategy_node* root1, strategy_node* root2, Pokerstate state) {	//check blueprintstrat subgame tree whether action length in same state 
 	int len = root1->action_len;
 	assert(root1->action_len == root2->action_len);
 	strategy_node* publicnode[169];
@@ -163,7 +165,7 @@ void check_subtree(strategy_node* publicnode[], Pokerstate& state, int len) {
 	delete[] legal_acts;
 	delete[] tempprivatenode;
 }
-void check_subgame(strategy_node* root, Pokerstate state) {	//check 蓝图策略 subgame tree whether action length in same state 
+void check_subgame(strategy_node* root, Pokerstate state) {	//check blueprint strat subgame tree whether action length in same state 
 	int len = root->action_len;
 	strategy_node* publicnode[169];
 	for (int i = 0; i < len; i++)
@@ -635,7 +637,7 @@ void addnode_bysubgame(subgame_node* subgameroot, vector<unsigned char> hisact, 
 		for (int i = 0; i < len; i++)
 			publicinfoset[j] = publicinfoset[j]->findnode(hisact[i]);
 		subgame_node* oldaction = publicinfoset[j]->actions;				//旧child node[]
-		publicinfoset[j]->actionstr[publicinfoset[j]->action_len] = offtreeact;	//新增动作节点增加动作char
+		publicinfoset[j]->actionstr[publicinfoset[j]->action_len] = offtreeact;	// Added action nodes to increase action char
 		publicinfoset[j]->action_len++;											//新增动作节点增加标志child node 长度
 		subgame_node* newactions = new subgame_node[publicinfoset[j]->action_len];
 		for (int q = 0; q < publicinfoset[j]->action_len - 1; q++)				//新的action_len-1 节点从旧的child node中赋值过来
@@ -666,7 +668,7 @@ void addnode_bysubgame(subgame_node* subgameroot, vector<unsigned char> hisact, 
 			publicinfoset[j]->init_child(tt1, 2);
 		}
 		else {
-			for (int tt = 0; tt < publicinfoset[j]->action_len - 1; tt++)		//映射动作的后悔值赋值给新增动作
+			for (int tt = 0; tt < publicinfoset[j]->action_len - 1; tt++) // Map the regret value of the action assigned to the new action
 				if (publicinfoset[j]->actionstr[tt] == treeact) {
 					publicinfoset[j]->regret[publicinfoset[j]->action_len - 1] = publicinfoset[j]->regret[tt];
 					break;

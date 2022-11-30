@@ -8,9 +8,10 @@ using namespace std;
 
 Engine* engine = new Engine();
 std::map<unsigned char, int>::iterator actionfind;
-// values to raise by
+// 10 values to raise by, proportional to pot. see legal_actions(), line 693, for details on each raise
+// 'l'=108=call, 'd'=100=fold, 'n'=110=all in, 1, 2, 3, 4, 8, 20, 40
+// Q: why do all of these map to zero?
 map<unsigned char, int> raise_action_chips = {{'l',0},{'d',0},{'n',0},{(unsigned char)1,0},{(unsigned char)2,0},{(unsigned char)3,0},{(unsigned char)4,0},{(unsigned char)8,0},{(unsigned char)20,0},{(unsigned char)40,0}};
-map<int, int> myMap;
 
 char suits[] = "scdh";
 char ranks[] = "23456789TJQKA";
@@ -37,7 +38,8 @@ public:
 		playerscard[1][1] = table.deck.deal_one_card();
 		if (playerscard[0][0] > playerscard[0][1]) swap(playerscard[0][0], playerscard[0][1]);
 		if (playerscard[1][0] > playerscard[1][1]) swap(playerscard[1][0], playerscard[1][1]);
-		winplayer = engine->compute_winner(playerscard[0], playerscard[1], community_cards);//计算第i个采样公共牌的胜负关系
+        // Calculate the win-loss relationship of the ith sampled community card
+		winplayer = engine->compute_winner(playerscard[0], playerscard[1], community_cards); 
 		for (int i = 0; i < table.playerlen; i++) {
 			unsigned cl = engine->get_preflop_cluster(playerscard[i]);
 			table.players[i].clusters[0] = cl;
@@ -86,6 +88,7 @@ public:
 		}
 		return biggest_bet;
 	}
+    // check if state is after river (4 = shutdown, 5 = terminal)
 	int is_terminal() {
 		return betting_stage > 3;
 	}
@@ -114,12 +117,12 @@ public:
 	}
 	bool take_action(unsigned char actionstr) {		//不计算最后输赢，只记录加注流程和check合理性
 		cur_round_action_num++;
-		if (actionstr == 'l') {
+		if (actionstr == 'l') { // call action
 			int n_chips_to_call = last_bigbet - table.players[player_i_index].n_bet_chips();
 			table.players[player_i_index].call(n_chips_to_call);//last max bet chips - self bet chips = need to call chips
 			table.Add_pot(n_chips_to_call);
 		}
-		else if (actionstr == 'd') {
+		else if (actionstr == 'd') { // fold
 			betting_stage = 5;
 			table.players[player_i_index].active = false;
 		}
@@ -137,7 +140,7 @@ public:
 			table.Add_pot(raise_n_chips);
 			n_raises++;
 		}
-		else if (actionstr == 'n') {
+		else if (actionstr == 'n') { // all-in
 			int n_chips = table.players[player_i_index].n_chips;
 			table.players[player_i_index].raise_to(n_chips);
 			table.Add_pot(n_chips);
@@ -164,16 +167,16 @@ public:
 	}
 	bool apply_action(unsigned char actionstr) {//执行动作，如果游戏结束自动计算输赢筹码
 		cur_round_action_num++;
-		if (actionstr == 'l') {
+		if (actionstr == 'l') { // call
 			int n_chips_to_call = last_bigbet - table.players[player_i_index].n_bet_chips();
 			table.players[player_i_index].call(n_chips_to_call);//last max bet chips - self bet chips = need to call chips
 			table.Add_pot(n_chips_to_call);
 		}
-		else if (actionstr == 'd') {
+		else if (actionstr == 'd') { // fold
 			betting_stage = 5;
 			table.players[player_i_index].active = false;
 		}
-		else if (actionstr == 'n') {
+		else if (actionstr == 'n') { // all-in
 			int n_chips = table.players[player_i_index].n_chips;
 			table.players[player_i_index].raise_to(n_chips);
 			table.Add_pot(n_chips);
@@ -184,8 +187,8 @@ public:
 		else if (actionstr <= 80 || actionstr == 160) {
 			int n_chips_to_call = last_bigbet - table.players[player_i_index].n_bet_chips();
 			int pot = table.total_pot + n_chips_to_call;
-			if (actionstr != 3)
-				last_raise = pot * actionstr / 200 * 100;
+			if (actionstr != 3) // significance of 3?
+				last_raise = pot * actionstr / 200 * 100; // why not just divide by 2?
 			else
 				last_raise = pot / 400 * 100;
 			int raise_n_chips = last_raise + n_chips_to_call;
@@ -311,7 +314,7 @@ public:
 		assert(betting_stage == 0);
 		unsigned char playerscard[2][2], community_cards[5];
 		table.deck.reset();
-		//设置不安全搜索手牌
+        // Set up an unsafe search hand
 		playerscard[0][0] = table.deck.deal_one_card();
 		playerscard[0][1] = table.deck.deal_one_card();
 		playerscard[1][0] = table.deck.deal_one_card();
@@ -524,11 +527,11 @@ public:
 	int payout(int i) {
 		return table.players[i].n_chips - table.players[i].initial_chips;
 	}
-	bool take_action(unsigned char actionstr) {		//不计算最后输赢，只记录加注流程和check合理性
+	bool take_action(unsigned char actionstr) {		// The final win or loss is not calculated, only the staking process and check reasonableness are recorded
 		cur_round_action_num++;
 		if (actionstr == 'l' || actionstr == 'k') {
 			int n_chips_to_call = last_bigbet - table.players[player_i_index].n_bet_chips();
-			table.players[player_i_index].call(n_chips_to_call);//last max bet chips - self bet chips = need to call chips
+			table.players[player_i_index].call(n_chips_to_call); //last max bet chips - self bet chips = need to call chips
 			table.Add_pot(n_chips_to_call);
 		}
 		else if (actionstr == 'd') {
@@ -587,7 +590,7 @@ public:
 		first_action_of_current_round = true;
 		return false;
 	}
-	bool apply_action(unsigned char actionstr) {//执行动作，如果游戏结束自动计算输赢筹码
+	bool apply_action(unsigned char actionstr) {// perform actions and automatically calculate winning + losing chips if game over
 		cur_round_action_num++;
 		if (actionstr == 'l' || actionstr == 'k') {
 			int n_chips_to_call = last_bigbet - table.players[player_i_index].n_bet_chips();
@@ -656,6 +659,7 @@ public:
 		first_action_of_current_round = true;
 		return false;
 	}
+    // rest of these functions are for ensuring legality of moves and proper game logistics
 	void increment_stage() {
 		betting_stage++;
 		if (betting_stage < 4)
@@ -690,6 +694,7 @@ public:
 		}
 		return cur;
 	}
+    // legal actions details the raises proportional to the pot
 	int legal_actions(unsigned char* actions) {
 		int chips = table.players[player_i_index].n_chips;
 		assert(table.total_pot == table.total());

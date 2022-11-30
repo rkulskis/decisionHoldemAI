@@ -91,9 +91,9 @@ void bulid_bluestrategy(strategy_node* privatenode[], int clusterlen) {
 	}
 	else throw exception();
 }
-void load(strategy_node* root, char filename[]) {//316174
+void load(strategy_node* root, char filename[]) {//316174 Q: what is the meaning of 316174? 
 	fin.open(filename, ios::in | ios::binary);
-	root->init_chance_node(169);
+	root->init_chance_node(169); // make strategy_node* with 169 actions, chance_node
 	strategy_node* privatenode[169];
 	for (int i = 0; i < 169; i++)
 		privatenode[i] = root->actions + i;

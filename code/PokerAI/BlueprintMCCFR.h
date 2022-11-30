@@ -10,18 +10,20 @@
 #include "tree/Exploitability.h"
 using namespace std;
 
+// cnode is __, state is the state of the table, pi is the player index, w is 1 initially then sigma[i] * w (discount factor?)
 double blueprint_cfr(strategy_node* cnode[], Pokerstate& state, int pi, double w) { // mccfr
 	int ph = state.player_i_index;
 	assert(cnode[0]->action_len == cnode[1]->action_len);
-	if (state.is_terminal()) {
+	if (state.is_terminal()) { // end of game iteration
 		return state.payout(pi);
 	}
 	else if (ph == pi) {
-		double sigma[12]; // why 12? maybe because the max action_len is 12
+		double sigma[12];
 		double vo = 0;
-		calculate_strategy(cnode[ph]->regret, cnode[ph]->action_len, sigma); // what is sigma?
-		int len = cnode[0]->action_len;
-		double voa[12] = { 0 }; // array zeros, maybe regret?
+        // calculate sigma, probability to take action
+		calculate_strategy(cnode[ph]->regret, cnode[ph]->action_len, sigma);
+		int len = cnode[0]->action_len; 
+		double voa[12] = { 0 };
 		for (int i = 0; i < len; i++) {
 			Pokerstate st2 = state;
 			bool is_chance = st2.apply_action(cnode[ph]->actionstr[i]);
@@ -42,7 +44,7 @@ double blueprint_cfr(strategy_node* cnode[], Pokerstate& state, int pi, double w
 				cnode[ph]->regret[i] = -210000000;
 		}
 		assert(w > 0);
-		return vo / w; // what is w?
+		return vo / w;
 	}
 	else {
 		double sigma[12];
@@ -137,7 +139,7 @@ double blueprint_cfrp(strategy_node* cnode[], Pokerstate& state, int pi, int c, 
 	}
 }
 
-void dfs_discount(strategy_node* treenode,double d, bool firstin) {
+void dfs_discount(strategy_node* treenode, double d, bool firstin) {
 	if (treenode->action_len == 0)
 		return;
 	if (treenode->action_len > 100) {
@@ -155,7 +157,6 @@ void dfs_discount(strategy_node* treenode,double d, bool firstin) {
 			if (sigma[i] > 0)
 				treenode->averegret[i] += sigma[i];
 			treenode->regret[i] *= d;
-			//treenode->averegret[i] *= d;
 			dfs_discount(treenode->actions + i, d, firstin);
 		}
 	}
@@ -182,7 +183,6 @@ void update_strategy(strategy_node* treenode, bool firstin) {
 		}
 	}
 }
-// maybe some opportunity here to speed up using different intervals + thresholds
 const ll strategy_interval = 100000, discount_interval = 1000000, n_iterations = 2000000000, lcfr_threshold = 400000000;
 const int prune_threshold = 100000000, c = -200000000, n_players = 2, print_iteration = 10, dump_iteration = 100000000, update_threshold = 1000000;
 

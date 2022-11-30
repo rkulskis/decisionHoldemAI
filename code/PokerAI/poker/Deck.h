@@ -2,10 +2,8 @@
 #include <map>
 #include <algorithm>
 #include "Card.h"
-//#include <stdlib.h>
 #include "../util/Randint.h"
 using namespace std;
-//不用担心Pokerstate newstate= state,赋值cur_index和randi，因为只在初始手牌时候用，用完就不用了
 const int total_cards = 52;
 class Deck {
 public:
@@ -43,8 +41,6 @@ public:
 				cards[exclude[i]] = k;
 				vis[k++] = true;
 			}
-		//for (; cur_index < len; cur_index++)
-		//	swap(cards[cur_index], cards[exclude[cur_index]]);
 	}
 	inline unsigned char deal_one_card() {
 		int rs = (randi._rand() % (total_cards - cur_index)) + cur_index; //int rs = (rand() % (52 - cur_index)) + cur_index;

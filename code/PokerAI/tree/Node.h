@@ -3,14 +3,12 @@
 #include <exception>
 using namespace std;
 struct strategy_node {		//info set node 
-	//bool vis;
 	int action_len = 0;
 	unsigned char* actionstr ;
 	double* regret;
-	//float* cfv1;
-	//float* cfv2;
 	double* averegret;
 	strategy_node* actions ;
+
 	strategy_node() :action_len(0){}
 	strategy_node* findnode(unsigned char action) { // looking for strat node with action
 		for (int i = 0; i < action_len; i++) {
@@ -19,6 +17,7 @@ struct strategy_node {		//info set node
 		}
 		throw std::exception();
 	}
+    // not used in the code
 	int findindex(unsigned char action) {
 		for (int i = 0; i < action_len; i++) {
 			if (*(actionstr + i) == action)
@@ -28,9 +27,8 @@ struct strategy_node {		//info set node
 	}
 	void init_child(unsigned char* action_str, int _action_len) {
 		actionstr = action_str;
-		actions = new strategy_node[_action_len](); // confused by initialization, is this array?
+		actions = new strategy_node[_action_len]();
 		regret = new double[_action_len] {0};
-		//cfv1 = new float[_action_len] {0};
 		averegret = new double[_action_len] {0};
 		action_len = _action_len;
 		
@@ -41,9 +39,10 @@ struct strategy_node {		//info set node
 		action_len = initlen;
 	}
 };
+// sigma is set of new regret probabilities
 void calculate_strategy(double* oriregret, int len, double sigma[]) {
 	assert(len != 0);
-	int regret[12];
+	int regret[12]; // why is this int and not double?
 	for (int i = 0; i < len; i++)
 		regret[i] = oriregret[i];
 	double sum = 0;
@@ -61,6 +60,7 @@ void calculate_strategy(double* oriregret, int len, double sigma[]) {
 		for (int i = 0; i < len; i++)
 			sigma[i] = 1.0 / len;
 }
+// OVERLOAD 1: calculate regret probability for singular action
 double calculate_strategy(double* regret, int len, int actioni) {
 	assert(len != 0);
 	double sum = 0;
@@ -77,6 +77,7 @@ double calculate_strategy(double* regret, int len, int actioni) {
 	else
 		return 1.0 / len;
 }
+// OVERLOAD 2: calculate regret probability for singular action
 double calculate_strategy(int* regret, int len, int actioni) {
 	assert(len != 0);
 	double sum = 0;
@@ -95,7 +96,7 @@ double calculate_strategy(int* regret, int len, int actioni) {
 }
 
 struct subgame_node {		//info set node
-	bool frozen, leaf;	//leaf:深度受限叶节点，frozen：冻结这个节点策略不更新
+	bool frozen, leaf;	//leaf:depth contrained leaf nodes，frozen：freeze node policy is not updated
 	int action_len = 0;
 	unsigned char* actionstr ;
 	double* regret;
@@ -105,6 +106,7 @@ struct subgame_node {		//info set node
 	double* expolitvalues;
 	subgame_node() :action_len(0), frozen(false), leaf(false), actions(NULL){}
 	subgame_node* findnode(unsigned char action) {
+        // Q: why action 'k' is special here?
 		if (action == 'k')
 			action = 'l';
 		for (int i = 0; i < action_len; i++) {
@@ -125,20 +127,16 @@ struct subgame_node {		//info set node
 		throw exception();
 	}
 	void init_child(unsigned char* action_str, int _action_len) {
-		//if (action_len == 0) {
 			actionstr = action_str;
 			ave_strategy = new double[_action_len] {0};
 			actions = new subgame_node[_action_len]();
 			regret = new double[_action_len] {0};
 			action_len = _action_len;
-		//}
 	}
 	void init_chance_node(int initlen) {
-		//if (action_len == 0) {
 			actions = new subgame_node[initlen]();
 			expolitvalues = new double[initlen] {0};
 			action_len = initlen;
-		//}
 	}
 };
 double calculate_strategy_action(int* oriregret, int len, int index) {
@@ -148,15 +146,15 @@ double calculate_strategy_action(int* oriregret, int len, int index) {
 		if (oriregret[i] > 0) 
 			sum += oriregret[i];
 	}
-	if (sum == 0) {//确保后悔值一定有正数
+	if (sum == 0) {
 		return 1.0 / len;
 	}
-	//当前动作后悔值要正数
 	if (oriregret[index] > 0) 
 		return oriregret[index] / sum;
 	else
 		return 0;
 }
+// Q: why this function is not used? also, what are the biasid values?
 double calculate_strategy_action(int* oriregret, int len, unsigned char actionstr[], int biasid , int index) {
 	assert(len != 0);
 	int regret[12];
@@ -164,7 +162,7 @@ double calculate_strategy_action(int* oriregret, int len, unsigned char actionst
 		regret[i] = oriregret[i];
 	if (biasid == 1) {
 		if (actionstr[0] == 'd' && regret[0] > 0)
-			regret[0] *= 5;
+			regret[0] *= 5; // Q: why does 'd' have this bias?
 	}
 	else if (biasid == 2) {
 		if (actionstr[0] == 'l') {
@@ -201,7 +199,7 @@ double calculate_strategy_action(int* oriregret, int len, unsigned char actionst
 		if (regret[i] > 0)
 			sum += regret[i];
 	}
-	if (sum == 0) {//确保后悔值一定有正数
+	if (sum == 0) {
 		return 1.0 / len;
 	}
 	if (regret[index] > 0)
@@ -255,7 +253,7 @@ double calculate_strategy_action(double* oriregret, int len, unsigned char actio
 		if (regret[i] > 0)
 			sum += regret[i];
 	}
-	if (sum == 0) {//确保后悔值一定有正数
+	if (sum == 0) {
 		return 1.0 / len;
 	}
 	if (regret[index] > 0)

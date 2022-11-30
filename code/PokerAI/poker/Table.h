@@ -2,6 +2,7 @@
 #include "Player.h"
 #include "Card.h"
 #include "Deck.h"
+// think of this as game logistics for the table
 class PokerTable {
 public:
 	Player players[2];
@@ -40,7 +41,7 @@ class SearchTable {
 public:
 	SearchPlayer players[2];
 	unsigned char playerlen;//simulatechance:chance节点模拟十次计算平均utility，cur_simulatechance是当前到第几个了
-	unsigned short clusters[2][4];
+	unsigned short clusters[2][4]; // 2 players, 4 clusters mapping to pre, flop, turn, river
 	int total_pot;
 	Deck deck;
 	SearchTable(int _playerlen = 2) {

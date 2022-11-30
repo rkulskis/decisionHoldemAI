@@ -2,7 +2,7 @@
 #include "Multi_Blureprint.h"
 
 int main(int argc, char **argv) {			
-	assert(argc == 1);
+	// assert(argc == 1); this failed initially, why?
 	if (argv[0] == 0)
 		multiprocess_blueprint();
 	else

@@ -131,7 +131,7 @@ public:
 
 	int get_preflop_cluster(int c1, int c2) { //get preflop card 1326 to 169
 		unsigned cnt = c1 * 52 + c2;
-		assert(preflop_cluster[cnt] >= 0 && preflop_cluster[cnt] < 169);
+		assert(preflop_cluster[cnt] >= 0 && preflop_cluster[cnt] < 169); // 169 abstractions for preflop
 		return preflop_cluster[cnt];
 	}
 	int get_preflop_cluster(unsigned char  hand[]) { //get preflop card 1326 to 169
